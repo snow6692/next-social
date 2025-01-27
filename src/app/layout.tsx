@@ -4,7 +4,7 @@ import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/navbar/Navbar";
 import Sidebar from "@/components/sidebar/Sidebar";
-
+import { Toaster } from "@/components/ui/sonner";
 const geistSans = Geist({
   variable: "--font-geist-sans",
   subsets: ["latin"],
@@ -41,6 +41,7 @@ export default function RootLayout({
                     <Sidebar />
                   </div>
                   <div className="lg:col-span-9">{children}</div>
+                  <Toaster />
                 </div>
               </div>
             </main>
