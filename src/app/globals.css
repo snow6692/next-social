@@ -7,7 +7,7 @@ body {
 }
 
 @layer base {
-  :root {
+  .dark {
     --background: 0 0% 100%;
     --foreground: 240 10% 3.9%;
     --card: 0 0% 100%;
@@ -35,7 +35,7 @@ body {
     --chart-5: 27 87% 67%;
   }
 
-  .dark {
+  :root {
     --background: 20 14.3% 4.1%;
     --foreground: 0 0% 95%;
     --card: 24 9.8% 10%;

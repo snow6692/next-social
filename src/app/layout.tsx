@@ -1,12 +1,8 @@
-import { ThemeProvider } from "@/components/theme-provider";
-import {
-  ClerkProvider,
-
-} from "@clerk/nextjs";
+import { ClerkProvider } from "@clerk/nextjs";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import { ModeToggle } from "@/components/ui/ModeToggle";
+import Navbar from "@/components/navbar/Navbar";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -34,15 +30,18 @@ export default function RootLayout({
         <body
           className={`${geistSans.variable} ${geistMono.variable} antialiased`}
         >
-          <ThemeProvider
-            attribute="class"
-            defaultTheme="system"
-            enableSystem
-            disableTransitionOnChange
-          >
-            <ModeToggle />
-            {children}
-          </ThemeProvider>
+          <div className="max-h-screen">
+            <Navbar />
+            <main className="py-8">
+              {/* container to center the content */}
+              <div className="mx-auto max-w-7xl px-4">
+                <div className="grid grid-cols-1 gap-6 lg:grid-cols-12">
+                  <div className="hidden lg:col-span-3 lg:block">sidebar</div>
+                  <div className="lg:col-span-9">{children}</div>
+                </div>
+              </div>
+            </main>
+          </div>
         </body>
       </html>
     </ClerkProvider>
