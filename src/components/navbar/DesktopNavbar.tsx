@@ -12,7 +12,6 @@ import { currentUser } from "@clerk/nextjs/server";
 
 async function DesktopNavbar() {
   const user = await currentUser();
-  console.log(user?.emailAddresses);
   return (
     <div className="hidden items-center space-x-4 md:flex">
       <Button variant="ghost" className="flex items-center gap-2" asChild>
