@@ -1,34 +1,42 @@
 "use client";
-import { addComment, deletePost, toggleLike } from "@/actions/postAction";
-import { Post } from "@/types/post";
+
+import {
+  createComment,
+  deletePost,
+  getPosts,
+  toggleLike,
+} from "@/actions/postAction";
 import { SignInButton, useUser } from "@clerk/nextjs";
 import { useState } from "react";
-import { toast } from "sonner";
-import { Card, CardContent } from "../ui/card";
+
+import { Card, CardContent } from "@/components/ui/card";
 import Link from "next/link";
-import { Avatar, AvatarImage } from "../ui/avatar";
+import { Avatar, AvatarImage } from "@/components/ui/avatar";
 import { formatDistanceToNow } from "date-fns";
 import { DeleteAlertDialog } from "./DeleteAlertDialog";
-import { Button } from "../ui/button";
+import { Button } from "@/components/ui/button";
 import {
   HeartIcon,
   LogInIcon,
   MessageCircleIcon,
   SendIcon,
 } from "lucide-react";
-import { Textarea } from "../ui/textarea";
+import { Textarea } from "@/components/ui/textarea";
+import { toast } from "sonner";
 
-function PostCard({ post, dbUserId }: { dbUserId: string | null; post: Post }) {
+type Posts = Awaited<ReturnType<typeof getPosts>>;
+type Post = Posts[number];
+
+function PostCard({ post, dbUserId }: { post: Post; dbUserId: string | null }) {
   const { user } = useUser();
   const [newComment, setNewComment] = useState("");
   const [isCommenting, setIsCommenting] = useState(false);
   const [isLiking, setIsLiking] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
-  const [isUpdating, setIsUpdating] = useState(false);
   const [hasLiked, setHasLiked] = useState(
     post.likes.some((like) => like.userId === dbUserId),
   );
-  const [optimisticLikes, setOptimisticLikes] = useState(post._count.likes);
+  const [optimisticLikes, setOptmisticLikes] = useState(post._count.likes);
   const [showComments, setShowComments] = useState(false);
 
   const handleLike = async () => {
@@ -36,22 +44,23 @@ function PostCard({ post, dbUserId }: { dbUserId: string | null; post: Post }) {
     try {
       setIsLiking(true);
       setHasLiked((prev) => !prev);
-      setOptimisticLikes((prev) => prev + (hasLiked ? -1 : +1));
+      setOptmisticLikes((prev) => prev + (hasLiked ? -1 : 1));
       await toggleLike(post.id);
     } catch (error) {
-      setOptimisticLikes(post._count.likes);
+      setOptmisticLikes(post._count.likes);
       setHasLiked(post.likes.some((like) => like.userId === dbUserId));
     } finally {
       setIsLiking(false);
     }
   };
+
   const handleAddComment = async () => {
     if (!newComment.trim() || isCommenting) return;
     try {
       setIsCommenting(true);
-      const result = await addComment(post.id, newComment);
+      const result = await createComment(post.id, newComment);
       if (result?.success) {
-        toast.success("Comment added successfully");
+        toast.success("Comment posted successfully");
         setNewComment("");
       }
     } catch (error) {
@@ -60,16 +69,16 @@ function PostCard({ post, dbUserId }: { dbUserId: string | null; post: Post }) {
       setIsCommenting(false);
     }
   };
+
   const handleDeletePost = async () => {
     if (isDeleting) return;
     try {
       setIsDeleting(true);
       const result = await deletePost(post.id);
-      if (result?.success) {
-        toast.success("Post deleted successfully");
-      }
+      if (result?.success) toast.success("Post deleted successfully");
+      else throw new Error(result?.error);
     } catch (error) {
-      toast.error("failed to delete post");
+      toast.error("Failed to delete post");
     } finally {
       setIsDeleting(false);
     }
@@ -81,12 +90,12 @@ function PostCard({ post, dbUserId }: { dbUserId: string | null; post: Post }) {
         <div className="space-y-4">
           <div className="flex space-x-3 sm:space-x-4">
             <Link href={`/profile/${post.author.username}`}>
-              <Avatar className="size-8 sm:size-10">
+              <Avatar className="size-8 sm:h-10 sm:w-10">
                 <AvatarImage src={post.author.image ?? "/avatar.png"} />
               </Avatar>
             </Link>
-            {/* Post header and text content  */}
 
+            {/* POST HEADER & TEXT CONTENT */}
             <div className="min-w-0 flex-1">
               <div className="flex items-start justify-between">
                 <div className="flex flex-col truncate sm:flex-row sm:items-center sm:space-x-2">
@@ -119,6 +128,7 @@ function PostCard({ post, dbUserId }: { dbUserId: string | null; post: Post }) {
               </p>
             </div>
           </div>
+
           {/* POST IMAGE */}
           {post.image && (
             <div className="overflow-hidden rounded-lg">
@@ -130,7 +140,7 @@ function PostCard({ post, dbUserId }: { dbUserId: string | null; post: Post }) {
             </div>
           )}
 
-          {/* Like and comment buttons */}
+          {/* LIKE & COMMENT BUTTONS */}
           <div className="flex items-center space-x-4 pt-2">
             {user ? (
               <Button
@@ -176,17 +186,13 @@ function PostCard({ post, dbUserId }: { dbUserId: string | null; post: Post }) {
             </Button>
           </div>
 
-          {/* Comments Section */}
+          {/* COMMENTS SECTION */}
           {showComments && (
             <div className="space-y-4 border-t pt-4">
               <div className="space-y-4">
                 {/* DISPLAY COMMENTS */}
                 {post.comments.map((comment) => (
-                  <Link
-                    href={`profile/${comment.author.username}`}
-                    key={comment.id}
-                    className="flex space-x-3"
-                  >
+                  <div key={comment.id} className="flex space-x-3">
                     <Avatar className="size-8 flex-shrink-0">
                       <AvatarImage
                         src={comment.author.image ?? "/avatar.png"}
@@ -207,7 +213,7 @@ function PostCard({ post, dbUserId }: { dbUserId: string | null; post: Post }) {
                       </div>
                       <p className="break-words text-sm">{comment.content}</p>
                     </div>
-                  </Link>
+                  </div>
                 ))}
               </div>
 
@@ -259,5 +265,4 @@ function PostCard({ post, dbUserId }: { dbUserId: string | null; post: Post }) {
     </Card>
   );
 }
-
 export default PostCard;
